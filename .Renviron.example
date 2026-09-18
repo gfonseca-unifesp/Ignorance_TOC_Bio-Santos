@@ -1,0 +1,12 @@
+# F0.2 (ROADMAP MSv6) — copie para .Renviron (não versionado) e ajuste à sua máquina.
+# R lê .Renviron do diretório de trabalho ao iniciar; rode os scripts a partir desta pasta
+# Copie este arquivo para a raiz do projeto E para a raiz de cada demo (Demo2_Santos_AOA/, Demo3a_AOA/, Demo3b_TOC/),
+# porque o R lê o .Renviron do diretório onde é iniciado.
+# Atenção: valores de .Renviron sobrepõem variáveis do shell; a forma ${VAR-padrão} preserva o valor já definido.
+
+# Raiz do projeto (usada pelos scripts de Santos e pelos run_*.R do Demo3b)
+IGNORANCE_ROOT=${IGNORANCE_ROOT-C:/Users/fonse/OneDrive/Documentos/Ignorance_MS}
+
+# Cache de preditores e rótulos NN-TOC (Demo3a_AOA/R/02_predictors.R; lido em Demo3a/Demo3b 00_config.R)
+# contém: predictors_*_0.1deg.tif, raw/, toc/ (rótulos NN-TOC), terra_tmp/
+DEMO3A_CACHE=${DEMO3A_CACHE-C:/Users/fonse/Demo3a_cache}
