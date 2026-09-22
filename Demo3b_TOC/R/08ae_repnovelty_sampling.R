@@ -24,6 +24,9 @@ suppressPackageStartupMessages({ library(ranger); library(FNN) })
 set.seed(CFG$seed)
 t_start <- Sys.time()
 N_STARTS <- as.integer(Sys.getenv("DEMO3B_SAMPLING_STARTS", "10"))
+# MSv7: DEMO3B_FIG_ONLY=1 redraws the figure from the saved runs (no refit); DEMO3B_FIG_TAG suffixes its file name
+FIG_ONLY <- Sys.getenv("DEMO3B_FIG_ONLY", "0") == "1"
+FIG_TAG  <- Sys.getenv("DEMO3B_FIG_TAG", "")
 
 ## ---- the setup of 08h, reproduced line for line -------------------------------------
 model <- readRDS(file.path(DIRS$models, "rf_spatialCV_toc.rds"))
@@ -59,6 +62,10 @@ select_repnovelty <- function(cand, sampled_idx, inr, n_add) {
 
 ## ---- run the new strategy on the same starts ----------------------------------------
 old <- read.csv(file.path(DIRS$tables, "targeted_sampling_runs_toc.csv"))     # 08h, same iteration
+if (FIG_ONLY) {
+  NEW <- read.csv(file.path(DIRS$compare, "f54_repnovelty_runs_toc.csv"))
+  R <- rbind(old[, names(NEW)], NEW)
+} else {
 runs <- list()
 for (r in sort(unique(d$region))) {
   t0 <- Sys.time()
@@ -114,6 +121,7 @@ print(pooled[order(pooled$pct_pool, -pooled$mean_gain), ], digits = 3, row.names
 by_reg <- aggregate(gain_minus_random ~ region + strategy + pct_pool, G, mean)
 write.csv(by_reg, file.path(DIRS$compare, "f54_repnovelty_by_region_toc.csv"), row.names = FALSE)
 msg("F5.4 done in %.1f min", as.numeric(difftime(Sys.time(), t_start, units = "mins")))
+}
 
 ## ---- figure: the learning curves of 08h with the new strategy added (Supplementary Figure) --------
 suppressPackageStartupMessages(library(ggplot2))
@@ -126,10 +134,10 @@ p <- ggplot(lc, aes(pct_pool, rmse, colour = strategy)) + geom_line() + geom_poi
                                  repnovelty = "#08306B", uncertainty = "#C2410C", oracle = "#111111"),
                       labels = c(random = "random", space = "geographic gaps", novelty = "environmental novelty",
                                  repnovelty = "representative novelty", uncertainty = "model uncertainty",
-                                 oracle = "oracle (uses TOC values)")) +
+                                 oracle = "largest-error benchmark (uses TOC values)")) +
   scale_x_continuous(breaks = c(20, 40, 60)) +
   labs(x = "% of the region's candidate blocks sampled", y = "RMSE on fixed test blocks (log10 TOC)", colour = NULL,
        title = "Directed vs random addition of data, 8 regions x 10 random starts (iteration 2)") +
   theme_bw(base_size = 8) + theme(legend.position = "bottom", plot.title = element_text(face = "bold"))
-ggsave(file.path(DIRS$compare, "f54_targeted_sampling_curves_toc.png"), p, width = 220, height = 130, units = "mm", dpi = 250, bg = "white")
+ggsave(file.path(DIRS$compare, paste0("f54_targeted_sampling_curves_toc", FIG_TAG, ".png")), p, width = 220, height = 130, units = "mm", dpi = 250, bg = "white")
 msg("learning-curve figure with six strategies written")

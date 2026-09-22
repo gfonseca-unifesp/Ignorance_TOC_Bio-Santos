@@ -287,7 +287,7 @@ h7 <- read.csv(if (file.exists(f54)) f54 else file.path(DIRS$tables, "targeted_s
 h7 <- h7[h7$strategy != "random", ]
 lab <- c(repnovelty = "representative novelty (this map)", novelty = "environmental novelty (DI)",
          uncertainty = "model uncertainty (QRF)", space = "geographic gap filling",
-         oracle = "largest current error (upper bound)")
+         oracle = "largest-error benchmark (uses TOC values)")
 h7$strategy_lab <- factor(lab[h7$strategy], levels = rev(lab))
 h7$effort <- factor(paste0("sampled to ", h7$pct_pool, "% of candidates"), levels = paste0("sampled to ", c(40, 60), "% of candidates"))
 pd <- ggplot(h7, aes(mean_gain_minus_random, strategy_lab, colour = effort)) +
@@ -301,8 +301,8 @@ pd <- ggplot(h7, aes(mean_gain_minus_random, strategy_lab, colour = effort)) +
   theme_classic(base_size = 8) + theme(plot.title = element_text(face = "bold", size = 9), legend.position = "bottom")
 
 fig <- pa / (pb | pc3 | pd) + plot_layout(heights = c(1.05, 1))
-ggsave(file.path(DIRS$compare, "fig_sampling_priority_toc.png"), fig, width = 300, height = 210, units = "mm", dpi = 300, bg = "white")
-ggsave(file.path(DIRS$compare, "fig_sampling_priority_toc.pdf"), fig, width = 300, height = 210, units = "mm", bg = "white")
+ggsave(file.path(DIRS$compare, paste0("fig_sampling_priority_toc", Sys.getenv("DEMO3B_FIG_TAG", ""), ".png")), fig, width = 300, height = 210, units = "mm", dpi = 300, bg = "white")
+ggsave(file.path(DIRS$compare, paste0("fig_sampling_priority_toc", Sys.getenv("DEMO3B_FIG_TAG", ""), ".pdf")), fig, width = 300, height = 210, units = "mm", bg = "white")
 
 ## ---- 10. the numbers the text may quote ---------------------------------------------------------
 S <- function(m, v, d = "") data.frame(metric = m, value = v, description = d)
