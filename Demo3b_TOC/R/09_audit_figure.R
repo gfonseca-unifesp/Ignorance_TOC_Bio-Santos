@@ -59,13 +59,18 @@ budget$iteration_lab <- factor(ITS[budget$iteration], levels = rev(ITS))
 budget$component <- factor(budget$component, levels = COMP)
 pal <- setNames(c("#B4B2A9", "#F0997B", "#7F77DD", "#5DCAA5"), COMP)
 lab_end <- merge(unique(budget[, c("iteration", "iteration_lab", "total_mse", "rmse")]), cal, by = "iteration")
-lab_end$txt <- sprintf("withheld RMSE %.3f | spatial-CV R2 %.2f\n90%% interval coverage %.2f\nerror ranking rho: bins %.2f, points %.2f",
+lab_end$txt <- sprintf("withheld RMSE %.3f | spatial-CV R2 %.2f\n90%% interval coverage %.2f\ncalibration across dissimilarity bins rho %.2f;\nranking of individual points rho %.2f",
                        lab_end$rmse, lab_end$R2_cv, lab_end$coverage, lab_end$rho_bins, lab_end$rho)
 pb <- ggplot(budget, aes(mse, iteration_lab, fill = component)) +
   geom_col(width = 0.55, colour = "white", linewidth = 0.3, position = position_stack(reverse = TRUE)) +
   geom_text(aes(label = ifelse(share >= 4, sprintf("%.0f%%", share), "")), position = position_stack(vjust = 0.5, reverse = TRUE), size = 2.6) +
   geom_text(data = lab_end, aes(x = total_mse, y = iteration_lab, label = txt), inherit.aes = FALSE, hjust = -0.04, size = 2.4, lineheight = 0.95) +
-  scale_fill_manual(values = pal, name = NULL) +
+  # MSv10 (F3.3): os rótulos da legenda usam os termos do texto (Table 3, Box 3); os níveis do fator,
+  # que vêm da tabela do orçamento, não mudam
+  scale_fill_manual(values = pal, name = NULL,
+                    labels = c("Replicate floor (L5)", "Unstructured remainder (L4; candidate L2)",
+                               "Bias by sediment type within regions (L2)",
+                               "Regional offset (transfer to unsampled regions)")) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.7))) +
   labs(x = "mean squared error of withheld-region predictions (log10 TOC)^2", y = NULL,
        title = "b  The ignorance budget: what each iteration removed, and what remains") +
@@ -93,7 +98,7 @@ case <- data.frame(
             if (is.null(rg)) "TOC: collect data,\nstrategy chosen by test" else
               sprintf("TOC: collect in %d of %d regions,\nstrategy chosen by test", sum(!grepl("^new drivers|^stop", rg$decision)), nrow(rg)) },   # marginal regionalize calls read as collect (08v, Text S2.7)
           if (is.null(c2)) "TOC iteration 2: pending" else
-            sprintf("TOC iteration 2: withheld MSE %+.0f%%\n(regional offset %+.0f%%, sediment bias %+.0f%%)\nremaining: unstructured error above noise",
+            sprintf("TOC iteration 2: withheld MSE %+.1f%%\n(regional offset %+.0f%%, sediment bias %+.0f%%)\nremaining: unstructured error above noise",
                     100 * (tot[[IT2]] / tot[[IT1]] - 1), pct_change("Regional offset"), pct_change("Bias by sediment"))))
 box <- function(df, fill, col, lw = 0.3) list(
   geom_rect(data = df, aes(xmin = x - w / 2, xmax = x + w / 2, ymin = y - h / 2, ymax = y + h / 2), fill = fill, colour = col, linewidth = lw, inherit.aes = FALSE),

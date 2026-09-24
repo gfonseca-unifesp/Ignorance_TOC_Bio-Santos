@@ -48,12 +48,12 @@ eq <- as.numeric(quantile(v$e, c(0.01, 0.99), na.rm = TRUE))
 
 pa <- base_map(pct, scale_fill_viridis_c(trans = "log10", limits = c(0.05, 5), oob = scales::squish, breaks = c(0.05, 0.1, 0.25, 0.5, 1, 2.5, 5),
                                          labels = c("0.05", "0.1", "0.25", "0.5", "1", "2.5", "5"), na.value = NA, name = "TOC (%)"),
-  "a  Seafloor organic carbon after iteration 2 (carbon supply + sediment texture)",
+  "a  Seafloor organic carbon after iteration 2 (carbon supply + sediment lithology)",
   sprintf("0.1-degree prediction of surface-sediment TOC; spatial-CV R2 %s; RMSE in withheld regions %.3f log10 units",
           gv("R2_log_spatialCV"), sqrt(mean((op$pred - op$obs)^2))))
 pb <- base_map(dlt, scale_fill_gradient2(low = "#2166AC", mid = "#F7F7F7", high = "#B2182B", midpoint = 0, limits = c(-0.3, 0.3),
                                          oob = scales::squish, na.value = NA, name = "change\n(log10 TOC)"),
-  "b  What integrating sediment texture changed", "iteration 2 minus iteration 1; red = more carbon predicted with texture", legend = "bottom")
+  "b  What integrating sediment lithology changed", "iteration 2 minus iteration 1; red = more carbon predicted with lithology", legend = "bottom")
 pc <- base_map(ign, scale_fill_viridis_c(option = "magma", direction = -1, limits = eq, oob = scales::squish, na.value = NA, name = "expected RMSE\n(log10 TOC)"),
   "c  Ignorance map after iteration 2",
   sprintf("calibrated expected error; 90%% interval coverage %.2f in withheld regions", as.numeric(gv("calibration_best_coverage90"))), legend = "bottom")

@@ -231,6 +231,16 @@ write.csv(data.frame(variable = rownames(pc$rotation), PC1 = pc$rotation[, 1], P
 site_env <- data.frame(PC1 = predict(pc, Ze[picked, , drop = FALSE])[, 1],
                        PC2 = predict(pc, Ze[picked, , drop = FALSE])[, 2], rank = seq_along(picked))
 
+# MSv9 (pre-submission review, minor point 18): plain names for the predictor arrows of panel b
+PRETTY <- c(sst_mean = "sea-surface temperature", sbt_mean = "bottom temperature", sss_mean = "surface salinity",
+            sbs_mean = "bottom salinity", o2b_mean = "bottom oxygen", phyc_bot = "near-bottom phytoplankton C",
+            chl_mean = "surface chlorophyll", poc_surf = "surface particulate organic C",
+            poc_flux = "organic carbon flux to the seafloor", river_poc = "riverine organic C",
+            river_tss = "riverine suspended sediment", sed_thick = "sediment thickness", depth = "depth",
+            dist_coast_km = "distance to land", tri = "terrain ruggedness", sws_bot = "bottom current",
+            litho_gs = "lithological grain size")
+pretty <- function(v) ifelse(is.na(PRETTY[v]), v, PRETTY[v])
+
 ## ---- 9. figure ----------------------------------------------------------------------------------
 PROJ <- "+proj=eqearth +datum=WGS84 +units=m"
 DIn  <- r_DI / thr
@@ -255,6 +265,7 @@ pa <- ggplot() + geom_spatraster(data = dp) +
 
 ld <- data.frame(var = rownames(pc$rotation), PC1 = pc$rotation[, 1], PC2 = pc$rotation[, 2])
 ld <- ld[order(-(ld$PC1^2 + ld$PC2^2)), ][1:6, ]
+ld$var <- pretty(ld$var)
 sc <- 0.8 * max(abs(range(env$PC1, env$PC2))) / max(sqrt(ld$PC1^2 + ld$PC2^2))
 pb <- ggplot(env, aes(PC1, PC2)) +
   stat_summary_2d(aes(z = pmin(DInorm, 2)), fun = mean, bins = 80) +
@@ -282,21 +293,28 @@ pc3 <- ggplot(curve, aes(n_sites)) +
   theme_classic(base_size = 8) + theme(plot.title = element_text(face = "bold", size = 9), legend.position = "bottom")
 
 # F5.4 added the criterion this map ranks by (representative novelty) to the same retrospective test
-f54 <- file.path(DIRS$compare, "f54_repnovelty_pooled_toc.csv")
-h7 <- read.csv(if (file.exists(f54)) f54 else file.path(DIRS$tables, "targeted_sampling_pooled_toc.csv"))
-h7 <- h7[h7$strategy != "random", ]
-lab <- c(repnovelty = "representative novelty (this map)", novelty = "environmental novelty (DI)",
-         uncertainty = "model uncertainty (QRF)", space = "geographic gap filling",
-         oracle = "largest-error benchmark (uses TOC values)")
+# MSv10 (Fase 2 do ROADMAP_MSv10): panel d shows the same criterion that ranks panel a. The sites of
+# panel a are scored with Equation 1 over the ocean grid, so the retrospective row to read is the
+# "grid" variant of 08ag; the observation-cell variant is kept beside it for comparison.
+m1 <- file.path(DIRS$compare, "m1_pooled_toc.csv")
+h7 <- read.csv(if (file.exists(m1)) m1 else file.path(DIRS$compare, "f54_repnovelty_pooled_toc.csv"))
+lab <- c(grid_greedy       = "representative novelty - aimed at the ocean grid (ranks panel a)",
+         obs_notest_greedy = "representative novelty - aimed at the observations",
+         novelty           = "environmental novelty (DI)",
+         uncertainty       = "model uncertainty (QRF)",
+         space             = "geographic gap filling",
+         oracle            = "largest-error benchmark (uses TOC values)")
+h7 <- h7[h7$strategy %in% names(lab), ]
 h7$strategy_lab <- factor(lab[h7$strategy], levels = rev(lab))
 h7$effort <- factor(paste0("sampled to ", h7$pct_pool, "% of candidates"), levels = paste0("sampled to ", c(40, 60), "% of candidates"))
 pd <- ggplot(h7, aes(mean_gain_minus_random, strategy_lab, colour = effort)) +
   geom_vline(xintercept = 0, colour = "grey55") +
   geom_pointrange(aes(xmin = ci_lo, xmax = ci_hi), position = position_dodge(width = 0.5), size = 0.3) +
   scale_colour_manual(values = c("#1D6A73", "#C2410C"), name = NULL) +
-  labs(x = "extra RMSE reduction vs random addition of data (log10 TOC; 95% CI)", y = NULL,
+  labs(x = "extra RMSE reduction vs random addition of data (log10 TOC; 95% CI)
+the zero line is random addition, the reference of every comparison", y = NULL,
        title = "d  Does directed collection reduce error?",
-       subtitle = "yes, and most for this map's criterion;
+       subtitle = "yes; the criterion of panel a is the ocean-grid row;
 8 regions, 10 random starts each (iteration 2)") +
   theme_classic(base_size = 8) + theme(plot.title = element_text(face = "bold", size = 9), legend.position = "bottom")
 

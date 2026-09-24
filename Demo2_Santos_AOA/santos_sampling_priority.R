@@ -29,6 +29,9 @@ ROOT <- Sys.getenv("IGNORANCE_ROOT", "C:/Users/fonse/OneDrive/Documentos/Ignoran
 OUT  <- file.path(ROOT, "Demo2_Santos_AOA", "outputs")
 msg  <- function(...) cat(format(Sys.time(), "[%H:%M:%S] "), sprintf(...), "\n", sep = "")
 
+# MSv10 (F3.1): tipografia e sufixo de arquivo controlados por ambiente, para não sobrescrever saídas
+FIG_BASE <- as.numeric(Sys.getenv("SANTOS_FIG_BASE", "8"))
+FIG_TAG  <- Sys.getenv("SANTOS_FIG_TAG", "")
 N_A     <- as.integer(Sys.getenv("SANTOS_N_A", "30"))    # layer A: random stations within the design
 N_B     <- as.integer(Sys.getenv("SANTOS_N_B", "20"))    # layer B: ranked sites that extend applicability
 M_CAND  <- 2000                                          # layer B candidates evaluated per step
@@ -200,7 +203,9 @@ pa <- ggplot() +
   geom_point(data = transform(layerA, zone = factor(zone, levels = names(ZONES))),
              aes(lon, lat, shape = zone), colour = "#1D6A73", size = 2, stroke = 0.6, fill = NA) +
   scale_shape_manual(values = c("shelf (<= 200 m)" = 25, "slope (200-1000 m)" = 23, "deep (1000-2400 m)" = 24),
-                     breaks = names(ZONES), name = "Layer A — random stations within\nthe stratified design (T3/T3b:\nno guide beat random)") +
+                     breaks = names(ZONES),
+                     labels = c("shelf (≤ 200 m)", "upper slope (200–1,000 m)", "lower slope (1,000–2,400 m)"),
+                     name = "Layer A — random stations\nwithin the stratified design") +
   geom_point(data = layerB, aes(lon, lat, colour = rank), size = 2.2) +
   scale_colour_gradient(low = "#FCA5A5", high = "#7F1D1D", trans = "reverse",     # rank 1 = darkest
                         name = "Layer B — ranked sites that\nextend applicability (untested\nagainst error)") +
@@ -209,11 +214,10 @@ pa <- ggplot() +
   labs(x = "Longitude", y = "Latitude",
        title = "Santos Basin: where to add stations, and where the models stop being applicable",
        subtitle = sprintf(paste0("Dashed contours: transition (%.1f) and extrapolation (%.1f) edges; grey dots: the 99 existing stations.\n",
-                                 "When to sample: at equal effort a new time interval pays about twice as much as new stations\n",
-                                 "(T4b gains %.3f same survey, %.3f other survey, %.3f both), so layers A and B are meant to be\n",
-                                 "occupied in a NEW survey, together with the existing stations."),
-                          EDGE[1], EDGE[2], T4B[1], T4B[2], T4B[3])) +
-  theme_bw(base_size = 8) + theme(legend.position = "right", panel.grid = element_blank(),
+                                 "Layers A and B are for a new survey: at equal effort, adding samples from the other survey cut\n",
+                                 "ignorance about 2.3 times more than new stations within the survey already sampled."),
+                          EDGE[1], EDGE[2])) +
+  theme_bw(base_size = FIG_BASE) + theme(legend.position = "right", panel.grid = element_blank(),
                                   plot.title = element_text(face = "bold"))
 
 pb <- ggplot(curveB, aes(n_sites)) +
@@ -224,11 +228,11 @@ pb <- ggplot(curveB, aes(n_sites)) +
   labs(x = "layer-B sites added", y = "% of the basin in environmental extrapolation",
        title = "How much extrapolation each added site removes",
        subtitle = "objective: applicability of the published models, not prediction error") +
-  theme_classic(base_size = 8) + theme(plot.title = element_text(face = "bold", size = 9), legend.position = "bottom")
+  theme_classic(base_size = FIG_BASE) + theme(plot.title = element_text(face = "bold", size = FIG_BASE + 1), legend.position = "bottom")
 
 fig <- pa / pb + plot_layout(heights = c(2.1, 1))
-ggsave(file.path(OUT, "fig_santos_sampling_priority.png"), fig, width = 210, height = 240, units = "mm", dpi = 300, bg = "white")
-ggsave(file.path(OUT, "fig_santos_sampling_priority.pdf"), fig, width = 210, height = 240, units = "mm", bg = "white")
+ggsave(file.path(OUT, paste0("fig_santos_sampling_priority", FIG_TAG, ".png")), fig, width = 210, height = 240, units = "mm", dpi = 300, bg = "white")
+ggsave(file.path(OUT, paste0("fig_santos_sampling_priority", FIG_TAG, ".pdf")), fig, width = 210, height = 240, units = "mm", bg = "white")
 
 ## ---- 7. the numbers the text may quote --------------------------------------------------
 S <- function(m, v, d = "") data.frame(metric = m, value = v, description = d)
